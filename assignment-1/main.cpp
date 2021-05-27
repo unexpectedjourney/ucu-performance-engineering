@@ -3,8 +3,10 @@
 #include <sys/times.h>
 #include <ctime>
 #include <xmmintrin.h>
+#include <smmintrin.h>
 
 #define LEN 33000
+#define MLEN 50
 #define NTIMES 100000
 
 const float sec_const = 1000000.0;
@@ -13,10 +15,18 @@ float a[LEN] __attribute__((aligned(16)));
 float b[LEN] __attribute__((aligned(16)));
 float c[LEN] __attribute__((aligned(16)));
 float d[LEN] __attribute__((aligned(16)));
-
 float sum[LEN] __attribute__((aligned(16)));
 
-int nothing_1(float _a[LEN], float _b[LEN], float _c[LEN], float _d[LEN], float _sum[LEN]){
+double m_a[MLEN][MLEN] __attribute__((aligned(16)));
+double m_b[MLEN][MLEN] __attribute__((aligned(16)));
+double result_vector[MLEN] __attribute__((aligned(16)));
+double result[MLEN][MLEN] __attribute__((aligned(16)));
+
+int nothing_1(float _a[LEN], float _b[LEN], float _c[LEN], float _d[LEN], float _sum[LEN]) {
+  return (0);
+}
+
+int nothing_2(double _m_a[MLEN][MLEN], double _m_b[MLEN][MLEN], double _result[MLEN][MLEN]) {
   return (0);
 }
 
@@ -66,11 +76,65 @@ void vectorized_sum() {
   nothing_1(a, b, c, d, sum);
 }
 
+void init_matrix() {
+  for (int i = 0; i < MLEN; ++i) {
+    for (int j = 0; j < MLEN; ++j) {
+      m_a[i][j] = (rand() % 50) / 50;
+      m_b[i][j] = (rand() % 50) / 50;
+    }
+  }
+}
+
+void transpose_b() {
+  for (int i = 0; i < MLEN; ++i) {
+    for (int j = i; j < MLEN; ++j) {
+      double temp = m_b[i][j];
+      m_b[i][j] = m_b[j][i];
+      m_b[j][i] = temp;
+    }
+  }
+}
+
+void basic_multiplication() {
+  for (int i = 0; i < MLEN; ++i) {
+    for (int j = 0; j < MLEN; ++j) {
+      result[i][j] = 0;
+      for (int k = 0; k < MLEN; ++k) {
+        result[i][j] += (m_a[i][k] * m_a[k][j]);
+      }
+    }
+  }
+  nothing_2(m_a, m_b, result);
+}
+
+void vectorized_multiplication() {
+  for (int i = 0; i < MLEN; ++i) {
+    for (int j = 0; j < MLEN; ++j) {
+      __m128d rA, rB, rab;
+      __m128d rR = _mm_setzero_pd();
+
+      for (int k = 0; k < LEN; k += 4) {
+        rA = _mm_load_pd(&m_a[i][k]);
+        rB = _mm_load_pd(&m_b[j][k]);
+
+        rab = _mm_dp_pd(rA, rB, 0xff);
+        rR = _mm_add_pd(rab, rR);
+      }
+//      _mm_store_pd(&result[i][j], rR);
+    }
+  }
+  nothing_2(m_a, m_b, result);
+}
 
 int main() {
   // Task 1
   init_vectors();
   count_time(&basic_sum, "Task 1 basic");
   count_time(&vectorized_sum, "Task 1 vectorized");
+
+  count_time(&basic_multiplication, "Task 2 basic");
+  // todo add openblas
+  transpose_b();
+  count_time(&vectorized_multiplication, "Task 2 vectorized");
   return 0;
 }
