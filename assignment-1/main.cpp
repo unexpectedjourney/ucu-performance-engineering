@@ -11,7 +11,7 @@
 
 #define LEN 33000
 #define MLEN 50
-#define STRLEN 301
+#define STRLEN 901
 #define SUBSTRLEN 3
 #define NTIMES 100000
 
@@ -201,7 +201,7 @@ void vectorized_substing_find() {
   const __m128i first_letter = _mm_set1_epi8(second_str[0]);
   const __m128i last_letter = _mm_set1_epi8(second_str[second_len - 1]);
 
-  for (int i = 0; i < STRLEN; i += 4) {
+  for (int i = 0; i < STRLEN; i += 2) {
     bool is_found = false;
 
     const __m128i block_first_letter = _mm_load_si128(
