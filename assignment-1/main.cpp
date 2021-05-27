@@ -4,6 +4,7 @@
 #include <ctime>
 #include <xmmintrin.h>
 #include <smmintrin.h>
+#include <cblas-openblas.h>
 
 #define LEN 33000
 #define MLEN 50
@@ -130,16 +131,28 @@ void vectorized_multiplication() {
   nothing_2(m_a, m_b, result);
 }
 
+void cblas_multiplication() {
+  cblas_dgemm(
+      CblasRowMajor,
+      CblasNoTrans, CblasTrans,
+      MLEN, MLEN, MLEN, 1,
+      &m_a[0][0], MLEN,
+      &m_a[0][0], MLEN,
+      MLEN,
+      &result[0][0], MLEN);
+}
+
 int main() {
   // Task 1
   init_vectors();
   count_time(&basic_sum, "Task 1 basic");
   count_time(&vectorized_sum, "Task 1 vectorized");
 
+  // Task 2
   init_matrix();
   count_time(&basic_multiplication, "Task 2 basic");
-  // todo add openblas
   transpose_b();
+  count_time(&cblas_multiplication, "Task 2 cblas");
   count_time(&vectorized_multiplication, "Task 2 vectorized");
   return 0;
 }
