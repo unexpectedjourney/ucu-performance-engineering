@@ -11,7 +11,7 @@
 
 #define LEN 33000
 #define MLEN 50
-#define STRLEN 121
+#define STRLEN 301
 #define SUBSTRLEN 3
 #define NTIMES 100000
 
@@ -31,11 +31,17 @@ double result[MLEN][MLEN] __attribute__((aligned(16)));
 char * first_str;
 char * second_str;
 
+const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 int nothing_1(float _a[LEN], float _b[LEN], float _c[LEN], float _d[LEN], float _sum[LEN]) {
   return (0);
 }
 
 int nothing_2(double _m_a[MLEN][MLEN], double _m_b[MLEN][MLEN], double _result[MLEN][MLEN]) {
+  return (0);
+}
+
+int nothing_3(char * _first_str, char * _second_str) {
   return (0);
 }
 
@@ -152,7 +158,6 @@ void cblas_multiplication() {
 
 
 static char *random_string(char *str, int size) {
-  const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   str = (char*)malloc(size + 1);
   if (size > 0) {
     --size;
@@ -187,23 +192,59 @@ void basic_substing_find() {
       break;
     }
   }
+  nothing_3(first_str, second_str);
+}
+
+void vectorized_substing_find() {
+  int second_len = strlen(second_str);
+
+  const __m128i first_letter = _mm_set1_epi8(second_str[0]);
+  const __m128i last_letter = _mm_set1_epi8(second_str[second_len - 1]);
+
+  for (int i = 0; i < STRLEN; i += 4) {
+    bool is_found = false;
+
+    const __m128i block_first_letter = _mm_load_si128(
+        reinterpret_cast<const __m128i*>(&first_str[i]));
+    const __m128i block_last_letter = _mm_load_si128(
+        reinterpret_cast<const __m128i*>(&first_str[i + second_len - 1]));
+
+    const __m128i first_equality = _mm_cmpeq_epi8(first_letter, block_first_letter);
+    const __m128i second_equality = _mm_cmpeq_epi8(last_letter, block_last_letter);
+
+    int mask = _mm_movemask_epi8(_mm_and_si128(first_equality, second_equality));
+
+    while (mask != 0) {
+      int bitpos = __builtin_ctzl(mask);
+      if (memcmp(&first_str[i + bitpos + 1], &second_str[1], second_len - 2) == 0) {
+        is_found = true;
+        break;
+      }
+      mask &= (mask - 1);
+    }
+    if (is_found) {
+      break;
+    }
+  }
+  nothing_3(first_str, second_str);
 }
 
 int main() {
-//  // Task 1
-//  init_vectors();
-//  count_time(&basic_sum, "Task 1 basic");
-//  count_time(&vectorized_sum, "Task 1 vectorized");
-//
-//  // Task 2
-//  init_matrix();
-//  count_time(&basic_multiplication, "Task 2 basic");
-//  transpose_b();
-//  count_time(&cblas_multiplication, "Task 2 cblas");
-//  count_time(&vectorized_multiplication, "Task 2 vectorized");
+  // Task 1
+  init_vectors();
+  count_time(&basic_sum, "Task 1 basic");
+  count_time(&vectorized_sum, "Task 1 vectorized");
+
+  // Task 2
+  init_matrix();
+  count_time(&basic_multiplication, "Task 2 basic");
+  transpose_b();
+  count_time(&cblas_multiplication, "Task 2 cblas");
+  count_time(&vectorized_multiplication, "Task 2 vectorized");
 
   // Task 3
   init_strings();
   count_time(&basic_substing_find, "Task 3 basic");
+  count_time(&vectorized_substing_find, "Task 3 vectorized");
   return 0;
 }
