@@ -43,10 +43,10 @@ void count_time(void (*f)(), char *func_name) {
 
 void init_vectors() {
   for (int i = 0; i < LEN; ++i) {
-    a[i] = (rand() % 50) / 50;
-    b[i] = (rand() % 50) / 50;
-    c[i] = (rand() % 50) / 50;
-    d[i] = (rand() % 50) / 50;
+    a[i] = (float)rand()/(float)(RAND_MAX) * 10;
+    b[i] = (float)rand()/(float)(RAND_MAX) * 10;
+    c[i] = (float)rand()/(float)(RAND_MAX) * 10;
+    d[i] = (float)rand()/(float)(RAND_MAX) * 10;
   }
 }
 
@@ -79,8 +79,9 @@ void vectorized_sum() {
 void init_matrix() {
   for (int i = 0; i < MLEN; ++i) {
     for (int j = 0; j < MLEN; ++j) {
-      m_a[i][j] = (rand() % 50) / 50;
-      m_b[i][j] = (rand() % 50) / 50;
+      m_a[i][j] = (double)rand()/(double)(RAND_MAX) * 10;
+      m_b[i][j] = (double)rand()/(double)(RAND_MAX) * 10;
+      result[i][j] = 0.;
     }
   }
 }
@@ -113,14 +114,17 @@ void vectorized_multiplication() {
       __m128d rA, rB, rab;
       __m128d rR = _mm_setzero_pd();
 
-      for (int k = 0; k < LEN; k += 4) {
+      for (int k = 0; k < MLEN; k += 2) {
         rA = _mm_load_pd(&m_a[i][k]);
         rB = _mm_load_pd(&m_b[j][k]);
-
-        rab = _mm_dp_pd(rA, rB, 0xff);
+        rab = _mm_mul_pd(rA, rB);
         rR = _mm_add_pd(rab, rR);
       }
-//      _mm_store_pd(&result[i][j], rR);
+
+      rR = _mm_hadd_pd(rR, rR);
+      rR = _mm_hadd_pd(rR, rR);
+      rR = _mm_hadd_pd(rR, rR);
+      result[i][j] = rR[0];
     }
   }
   nothing_2(m_a, m_b, result);
@@ -132,6 +136,7 @@ int main() {
   count_time(&basic_sum, "Task 1 basic");
   count_time(&vectorized_sum, "Task 1 vectorized");
 
+  init_matrix();
   count_time(&basic_multiplication, "Task 2 basic");
   // todo add openblas
   transpose_b();
