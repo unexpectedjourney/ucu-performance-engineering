@@ -6,8 +6,13 @@
 #include <smmintrin.h>
 #include <cblas-openblas.h>
 
+#include <string>
+#include <cstring>
+
 #define LEN 33000
 #define MLEN 50
+#define STRLEN 121
+#define SUBSTRLEN 3
 #define NTIMES 100000
 
 const float sec_const = 1000000.0;
@@ -22,6 +27,9 @@ double m_a[MLEN][MLEN] __attribute__((aligned(16)));
 double m_b[MLEN][MLEN] __attribute__((aligned(16)));
 double result_vector[MLEN] __attribute__((aligned(16)));
 double result[MLEN][MLEN] __attribute__((aligned(16)));
+
+char * first_str;
+char * second_str;
 
 int nothing_1(float _a[LEN], float _b[LEN], float _c[LEN], float _d[LEN], float _sum[LEN]) {
   return (0);
@@ -142,17 +150,60 @@ void cblas_multiplication() {
       &result[0][0], MLEN);
 }
 
-int main() {
-  // Task 1
-  init_vectors();
-  count_time(&basic_sum, "Task 1 basic");
-  count_time(&vectorized_sum, "Task 1 vectorized");
 
-  // Task 2
-  init_matrix();
-  count_time(&basic_multiplication, "Task 2 basic");
-  transpose_b();
-  count_time(&cblas_multiplication, "Task 2 cblas");
-  count_time(&vectorized_multiplication, "Task 2 vectorized");
+static char *random_string(char *str, int size) {
+  const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  str = (char*)malloc(size + 1);
+  if (size > 0) {
+    --size;
+    for (size_t n = 0; n < size; n++) {
+      int key = rand() % (int) (sizeof charset - 1);
+      str[n] = charset[key];
+    }
+    str[size] = '\0';
+  }
+  return str;
+}
+
+
+void init_strings() {
+  first_str = random_string(first_str, STRLEN);
+  second_str = random_string(second_str, SUBSTRLEN);
+}
+
+void basic_substing_find() {
+  for (int i = 0; i < strlen(first_str); ++i) {
+    bool is_found = true;
+    if (first_str[i] != second_str[0]) {
+      continue;
+    }
+    for (int j = 1; j < strlen(second_str); ++j) {
+      if (first_str[i + j] != second_str[j]) {
+        is_found = false;
+        break;
+      }
+    }
+    if (is_found) {
+      break;
+    }
+  }
+}
+
+int main() {
+//  // Task 1
+//  init_vectors();
+//  count_time(&basic_sum, "Task 1 basic");
+//  count_time(&vectorized_sum, "Task 1 vectorized");
+//
+//  // Task 2
+//  init_matrix();
+//  count_time(&basic_multiplication, "Task 2 basic");
+//  transpose_b();
+//  count_time(&cblas_multiplication, "Task 2 cblas");
+//  count_time(&vectorized_multiplication, "Task 2 vectorized");
+
+  // Task 3
+  init_strings();
+  count_time(&basic_substing_find, "Task 3 basic");
   return 0;
 }
