@@ -34,11 +34,8 @@ __global__ void sum_array(float * array, float * result_array, int n) {
 }
 
 
-void task1() {
-  int n = 1 << 20;
-  printf("%d\n", n);
+float task1(float * array, int n) {
   float * device_array, * device_result_array;
-  float * array = (float*)malloc(n*sizeof(float));
   float * result_array = (float*)malloc(n*sizeof(float));
 
   cudaMalloc(&device_array, n*sizeof(float));
@@ -50,7 +47,6 @@ void task1() {
   int blockSize = 1024;
   int gridSize = (int)ceil((float)n/blockSize);
 
-  fill_1_block<<<gridSize, blockSize>>>(device_array);
   fill_0_block<<<gridSize, blockSize>>>(device_result_array);
 
   sum_array<<<gridSize, blockSize>>>(device_array, device_result_array, n);
@@ -60,8 +56,22 @@ void task1() {
 
   cudaFree(device_array);
   cudaFree(device_result_array);
-  free(array);
+
+  float result = result_array[0];
   free(result_array);
+
+  return result;
+}
+
+void execute_task1() {
+  int n = 1 << 20;
+  printf("%d\n", n);
+  float * array = (float*)malloc(n*sizeof(float));
+  array = fill_random_block(array, n);
+  float result = task1(array, n);
+  printf("Sum of the array: %f\n", result);
+
+  free(array);
 }
 
 __global__ void get_min_array(float *array, float *min_results) {
@@ -210,8 +220,8 @@ void task3() {
 }
 
 int main() {
-//  task1();
+  execute_task1();
 //  task2();
-  task3();
+//  task3();
   return 0;
 }
