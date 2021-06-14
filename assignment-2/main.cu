@@ -19,6 +19,13 @@ float * fill_random_block(float *array, int n) {
   return array;
 }
 
+float * generate_filter(float *array, int n) {
+  for (int i = 0; i < n; ++i) {
+    array[i] = (i % 2);
+  }
+  return array;
+}
+
 __global__ void sum_array(float * array, float * result_array, int n) {
   int idx = threadIdx.x;
   if (idx < n) {
@@ -143,9 +150,68 @@ void task2() {
   free(result_array);
 }
 
+__global__ void convolute(float * array, float * filter, float * result_array, int array_size, int filter_size) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  float value = 0;
+
+  int start_point =  idx - (filter_size / 2);
+  for (int i = 0; i < filter_size; ++i) {
+    int current_position = start_point + i;
+    if (current_position < 0 || current_position >= array_size) {
+      continue;
+    }
+    value = value + array[current_position] * filter[i];
+  }
+  result_array[idx] = value;
+}
+
+void task3() {
+  int n = 1 << 10;
+  int m = 32;
+  printf("%d\n", n);
+  float * device_array, * device_result_array, * device_filter;
+
+  float * array = (float*)malloc(n*sizeof(float));
+  float * result_array = (float*)malloc(n*sizeof(float));
+  float * filter = (float*)malloc(m*sizeof(float));
+
+  array = fill_random_block(array, n);
+  filter = generate_filter(filter, m);
+
+  cudaMalloc(&device_array, n*sizeof(float));
+  cudaMalloc(&device_result_array, n*sizeof(float));
+  cudaMalloc(&device_filter, m*sizeof(float));
+
+  cudaMemcpy(device_array, array, n*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_result_array, result_array, n*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(device_filter, filter, m*sizeof(float), cudaMemcpyHostToDevice);
+
+
+  int blockSize = BLOCK_SIZE;
+  int gridSize = (int)ceil((float)n/blockSize);
+
+  fill_0_block<<<gridSize, blockSize>>>(device_result_array);
+
+  convolute<<<gridSize, blockSize>>>(device_array, device_filter, device_result_array, n, m);
+
+  cudaMemcpy(result_array, device_result_array, n*sizeof(float), cudaMemcpyDeviceToHost);
+
+  for (int i = 0; i < n; ++i) {
+    printf("%f\t", result_array[i]);
+  }
+
+  cudaFree(device_array);
+  cudaFree(device_result_array);
+  cudaFree(device_filter);
+  free(array);
+  free(result_array);
+  free(filter);
+}
 
 int main() {
 //  task1();
-  task2();
+//  task2();
+  task3();
   return 0;
 }
