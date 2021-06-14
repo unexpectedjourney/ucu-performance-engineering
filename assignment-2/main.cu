@@ -6,6 +6,8 @@ extern "C" float task1(float * array, int n);
 
 extern "C" float task2(float * array, int n);
 
+extern "C" void task3(float * array, float * result_array, float * filter, int n, int m);
+
 __global__ void fill_1_block(float *array) {
   int idx = threadIdx.x;
   array[idx] = 1;
@@ -173,18 +175,8 @@ __global__ void convolute(float * array, float * filter, float * result_array, i
   result_array[idx] = value;
 }
 
-void task3() {
-  int n = 1 << 10;
-  int m = 32;
-  printf("%d\n", n);
+void task3(float * array, float * result_array, float * filter, int n, int m) {
   float * device_array, * device_result_array, * device_filter;
-
-  float * array = (float*)malloc(n*sizeof(float));
-  float * result_array = (float*)malloc(n*sizeof(float));
-  float * filter = (float*)malloc(m*sizeof(float));
-
-  array = fill_random_block(array, n);
-  filter = generate_filter(filter, m);
 
   cudaMalloc(&device_array, n*sizeof(float));
   cudaMalloc(&device_result_array, n*sizeof(float));
@@ -193,7 +185,6 @@ void task3() {
   cudaMemcpy(device_array, array, n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(device_result_array, result_array, n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(device_filter, filter, m*sizeof(float), cudaMemcpyHostToDevice);
-
 
   int blockSize = BLOCK_SIZE;
   int gridSize = (int)ceil((float)n/blockSize);
@@ -204,13 +195,24 @@ void task3() {
 
   cudaMemcpy(result_array, device_result_array, n*sizeof(float), cudaMemcpyDeviceToHost);
 
-  for (int i = 0; i < n; ++i) {
-    printf("%f\t", result_array[i]);
-  }
-
   cudaFree(device_array);
   cudaFree(device_result_array);
   cudaFree(device_filter);
+}
+
+void execute_task3() {
+  int n = 1 << 10;
+  int m = 32;
+  printf("%d\n", n);
+  float * array = (float*)malloc(n*sizeof(float));
+  float * result_array = (float*)malloc(n*sizeof(float));
+  float * filter = (float*)malloc(m*sizeof(float));
+
+  array = fill_random_block(array, n);
+  filter = generate_filter(filter, m);
+
+  task3(array, result_array, filter, n, m);
+
   free(array);
   free(result_array);
   free(filter);
@@ -219,7 +221,6 @@ void task3() {
 int main() {
   execute_task1();
   execute_task2();
-//  task2();
-//  task3();
+  execute_task3();
   return 0;
 }
