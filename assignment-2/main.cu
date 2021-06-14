@@ -79,46 +79,46 @@ void execute_task1() {
 }
 
 __global__ void get_min_array(float *array, float *min_results) {
-  extern __shared__ float mintile[BLOCK_SIZE];
+  extern __shared__ float min_values[BLOCK_SIZE];
 
   unsigned int tid = threadIdx.x;
   unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-  mintile[tid] = array[i];
+  min_values[tid] = array[i];
   __syncthreads();
 
   for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (tid < s) {
-      if (mintile[tid + s] < mintile[tid]) {
-        mintile[tid] = mintile[tid + s];
+      if (min_values[tid + s] < min_values[tid]) {
+        min_values[tid] = min_values[tid + s];
       }
     }
     __syncthreads();
   }
 
   if (tid == 0) {
-    min_results[blockIdx.x] = mintile[0];
+    min_results[blockIdx.x] = min_values[0];
   }
 }
 
 __global__ void get_final_min_array(float * min_results) {
-  __shared__ float mintile[BLOCK_SIZE];
+  __shared__ float min_values[BLOCK_SIZE];
 
   unsigned int tid = threadIdx.x;
   unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-  mintile[tid] = min_results[i];
+  min_values[tid] = min_results[i];
   __syncthreads();
 
   for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (tid < s) {
-      if (mintile[tid + s] < mintile[tid]) {
-        mintile[tid] = mintile[tid + s];
+      if (min_values[tid + s] < min_values[tid]) {
+        min_values[tid] = min_values[tid + s];
       }
     }
     __syncthreads();
   }
 
   if (tid == 0) {
-    min_results[blockIdx.x] = mintile[0];
+    min_results[blockIdx.x] = min_values[0];
   }
 }
 

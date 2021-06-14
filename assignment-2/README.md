@@ -3,6 +3,10 @@ This assigment contains the solution of 5 tasks(3 main and 2 for integration) to
 
 ## Dependencies
 This application uses __nvcc__ and __python3__, so please install these dependencies before building this project.
+Also, you can install some python packages via command:
+```python3
+pip install -r requirements.txt
+```
 
 ## Task
 Реалізувати із використанням NVIDIA CUDA та CPU і порівняти швидкодію для такої задачі:
