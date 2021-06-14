@@ -2,6 +2,9 @@
 
 const int BLOCK_SIZE = 32;
 
+extern "C" float task1(float * array, int n);
+
+
 __global__ void fill_1_block(float *array) {
   int idx = threadIdx.x;
   array[idx] = 1;
