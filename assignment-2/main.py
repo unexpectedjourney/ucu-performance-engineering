@@ -12,11 +12,13 @@ FILTER_WIDTH = 32
 SO_FILE = "./main.so"
 MAINLIB = ctypes.CDLL(SO_FILE)
 
+
 def get_photo(url):
     req = requests.get(url)
     arr = np.asarray(bytearray(req.content), dtype=np.uint8)
     img = cv2.imdecode(arr, -1)
     return img
+
 
 @timeit
 def simple_sum_of_pixels(array):
@@ -25,6 +27,7 @@ def simple_sum_of_pixels(array):
         sum_value += array[i]
     return sum_value
 
+
 @timeit
 def cuda_sum_of_pixels(array):
     MAINLIB.task1.restype = ctypes.c_float
@@ -32,10 +35,12 @@ def cuda_sum_of_pixels(array):
     array_sum = MAINLIB.task1(array.astype(np.float32), array.shape[0])
     return array_sum
 
+
 def task1(image):
     print("Task1")
     simple_sum_of_pixels(image[0, :, :].flatten())
     cuda_sum_of_pixels(image[0, :, :].flatten())
+
 
 @timeit
 def simple_min_of_pixels(array):
@@ -45,6 +50,7 @@ def simple_min_of_pixels(array):
             min_value = array[i]
     return min_value
 
+
 @timeit
 def cuda_min_of_pixels(array):
     MAINLIB.task2.restype = ctypes.c_float
@@ -52,10 +58,12 @@ def cuda_min_of_pixels(array):
     array_sum = MAINLIB.task2(array.astype(np.float32), array.shape[0])
     return array_sum
 
+
 def task2(image):
     print("Task2")
     simple_min_of_pixels(image[0, :, :].flatten())
     cuda_min_of_pixels(image[0, :, :].flatten())
+
 
 @timeit
 def simple_convolution_of_pixels(image, image_filter):
@@ -71,6 +79,7 @@ def simple_convolution_of_pixels(image, image_filter):
                     continue
                 value = value + array[current_position] * image_filter[k]
             result_array.append(value)
+
 
 @timeit
 def cuda_convolution_of_pixels(image, image_filter):
@@ -93,8 +102,10 @@ def cuda_convolution_of_pixels(image, image_filter):
             image_filter.shape[0]
         )
 
+
 def generate_filter(size):
     return np.array([i % 2 for i in range(size)])
+
 
 def task3(image):
     print("Task3")
@@ -103,11 +114,13 @@ def task3(image):
     simple_convolution_of_pixels(image, image_filter)
     cuda_convolution_of_pixels(image, image_filter)
 
+
 def main():
     image = get_photo(IMAGE_URL).T
     task1(image)
     task2(image)
     task3(image)
+
 
 if __name__ == "__main__":
     main()
