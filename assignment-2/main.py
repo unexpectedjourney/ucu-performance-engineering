@@ -32,8 +32,20 @@ def task1(image):
     simple_sum_of_pixels(image[0, :, :].flatten())
     cuda_sum_of_pixels(image[0, :, :].flatten())
 
+@timeit
+def simple_min_of_pixels(array):
+    return np.min(array)
+
+@timeit
+def cuda_min_of_pixels(array):
+    MAINLIB.task2.restype = ctypes.c_float
+    MAINLIB.task2.argtypes = [ndpointer(dtype=np.float32), ctypes.c_int]
+    array_sum = MAINLIB.task2(array.astype(np.float32), array.shape[0])
+    return array_sum
+
 def task2(image):
-    pass
+    simple_min_of_pixels(image[0, :, :].flatten())
+    cuda_min_of_pixels(image[0, :, :].flatten())
 
 def task3(image):
     pass
@@ -42,6 +54,7 @@ def main():
     image = get_photo(IMAGE_URL).T
     print(image.shape)
     task1(image)
+    task2(image)
 
 if __name__ == "__main__":
     main()

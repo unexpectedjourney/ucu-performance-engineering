@@ -4,6 +4,7 @@ const int BLOCK_SIZE = 32;
 
 extern "C" float task1(float * array, int n);
 
+extern "C" float task2(float * array, int n);
 
 __global__ void fill_1_block(float *array) {
   int idx = threadIdx.x;
@@ -54,8 +55,6 @@ float task1(float * array, int n) {
 
   sum_array<<<gridSize, blockSize>>>(device_array, device_result_array, n);
   cudaMemcpy(result_array, device_result_array, n*sizeof(float), cudaMemcpyDeviceToHost);
-
-  printf("Sum: %f\n", result_array[0]);
 
   cudaFree(device_array);
   cudaFree(device_result_array);
@@ -121,20 +120,9 @@ __global__ void get_final_min_array(float * min_results) {
   }
 }
 
-void task2() {
-  int n = 1 << 10;
-  printf("%d\n", n);
+float task2(float * array, int n) {
   float * device_array, * device_result_array;
-  float * array = (float*)malloc(n*sizeof(float));
   float * result_array = (float*)malloc(n*sizeof(float));
-
-  array = fill_random_block(array, n);
-  float min_value = 1e9;
-  for (int i = 0; i < n; ++i) {
-    printf("%f\t", array[i]);
-    min_value = min(min_value, array[i]);
-  }
-  printf("\nMin value: %f\n", min_value);
 
   cudaMalloc(&device_array, n*sizeof(float));
   cudaMalloc(&device_result_array, n*sizeof(float));
@@ -152,15 +140,21 @@ void task2() {
 
   cudaMemcpy(result_array, device_result_array, n*sizeof(float), cudaMemcpyDeviceToHost);
 
-  printf("Min value: %f\n", result_array[0]);
-  for (int i = 0; i < blockSize; ++i) {
-    printf("%f\t", result_array[i]);
-  }
-
   cudaFree(device_array);
   cudaFree(device_result_array);
-  free(array);
+  float min_value = result_array[0];
   free(result_array);
+  return min_value;
+}
+
+void execute_task2() {
+  int n = 1 << 10;
+  printf("%d\n", n);
+  float * array = (float*)malloc(n*sizeof(float));
+  array = fill_random_block(array, n);
+  float result = task2(array, n);
+  printf("Min of the array: %f\n", result);
+  free(array);
 }
 
 __global__ void convolute(float * array, float * filter, float * result_array, int array_size, int filter_size) {
@@ -224,6 +218,7 @@ void task3() {
 
 int main() {
   execute_task1();
+  execute_task2();
 //  task2();
 //  task3();
   return 0;
