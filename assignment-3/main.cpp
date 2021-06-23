@@ -96,7 +96,6 @@ void multithread_min(std::vector<int> &array, std::atomic<int> &result) {
   }
 }
 
-
 void task2() {
   std::vector<int> array(N, 0);
   random_array(array);
@@ -108,9 +107,48 @@ void task2() {
   printf("%d\n", int(m_result));
 }
 
+void generate_filter(std::vector<int> &array) {
+  for (int i = 0; i < array.size(); ++i) {
+    array[i] = i % 2;
+  }
+}
+
+void basic_conv(std::vector<int> &array, std::vector<int> filter, std::vector<int> &result_array) {
+  for (int i = 0; i < result_array.size(); ++i) {
+    int value = 0;
+    int start_point =  i - (filter.size() / 2);
+    for (int j = 0; j < filter.size(); ++j) {
+      int current_position = start_point + j;
+      if (current_position < 0 || current_position >= result_array.size()) {
+        continue;
+      }
+      value = value + array[current_position] * filter[j];
+    }
+    result_array[i] = value;
+  }
+}
+
+void task3() {
+  std::vector<int> array(N, 0);
+  random_array(array);
+  std::vector<int> filter(32, 0);
+  generate_filter(filter);
+  std::vector<int> result_array(N, 0);
+
+  basic_conv(array, filter, result_array);
+  for (int i = 0; i < result_array.size(); ++i) {
+    printf("%d\t", result_array[i]);
+  }
+
+//  std::atomic<int> m_result{0};
+//  multithread_min(array, m_result);
+//  printf("%d\n", int(m_result));
+}
+
 
 int main() {
   task1();
   task2();
+  task3();
   return 0;
 }
