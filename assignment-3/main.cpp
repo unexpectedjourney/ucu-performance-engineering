@@ -109,14 +109,25 @@ void multithread_min(std::vector<int> &array, std::atomic<int> &result) {
 }
 
 void task2() {
+  printf("Task2:\n");
   std::vector<int> array(N, 0);
   random_array(array);
+  std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
   int simple_result = basic_min(array);
-  printf("%d\n", simple_result);
+  std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
+  std::chrono::duration<double> clock_delta = end_t - start_t;
+
+  printf("Simple results:\t %.2f \t\n", clock_delta.count());
+  printf("Result: %d\n", simple_result);
 
   std::atomic<int> m_result{0};
+  start_t = std::chrono::system_clock::now();
   multithread_min(array, m_result);
-  printf("%d\n", int(m_result));
+  end_t = std::chrono::system_clock::now();
+  clock_delta = end_t - start_t;
+
+  printf("Multithread results:\t %.2f \t\n", clock_delta.count());
+  printf("Result: %d\n", int(m_result));
 }
 
 void generate_filter(std::vector<int> &array) {
@@ -192,7 +203,7 @@ void task3() {
 
 int main() {
   task1();
-//  task2();
+  task2();
 //  task3();
   return 0;
 }
