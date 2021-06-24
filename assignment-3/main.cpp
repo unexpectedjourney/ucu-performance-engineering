@@ -7,17 +7,6 @@
 
 #define N 1000000
 
-const float sec_const = 1000000.0;
-
-void count_time(void (*f)(), char *func_name) {
-  clock_t start_t = clock();
-  f();
-  clock_t end_t = clock();
-  clock_t clock_delta = end_t - start_t;
-  double clock_delta_sec = (double) (clock_delta / sec_const);
-  printf("%s:\t %.2f \t\n", func_name, clock_delta_sec);
-}
-
 void random_array(std::vector<int> &array) {
   for (int i = 0; i < array.size(); ++i) {
     array[i] = rand() % 100;
@@ -182,28 +171,33 @@ void multithread_conv(std::vector<int> &array, std::vector<int> &filter, std::ve
 }
 
 void task3() {
+  printf("Task3:\n");
   std::vector<int> array(N, 0);
   random_array(array);
   std::vector<int> filter(32, 0);
   generate_filter(filter);
   std::vector<int> result_array(N, 0);
 
+  std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
   basic_conv(array, filter, result_array);
-  for (int i = 0; i < result_array.size(); ++i) {
-    printf("%d\t", result_array[i]);
-  }
+  std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
+  std::chrono::duration<double> clock_delta = end_t - start_t;
+
+  printf("Simple results:\t %.2f \t\n", clock_delta.count());
 
   std::vector<int> m_result_array(N, 0);
+  start_t = std::chrono::system_clock::now();
   multithread_conv(array, filter, m_result_array);
-  for (int i = 0; i < m_result_array.size(); ++i) {
-    printf("%d\t", m_result_array[i]);
-  }
+  end_t = std::chrono::system_clock::now();
+  clock_delta = end_t - start_t;
+
+  printf("Multithread results:\t %.2f \t\n", clock_delta.count());
 }
 
 
 int main() {
   task1();
   task2();
-//  task3();
+  task3();
   return 0;
 }
