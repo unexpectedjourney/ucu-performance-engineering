@@ -4,13 +4,35 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <algorithm>
+#include <opencv2/opencv.hpp>
 
-#define N 1000000
+#define TIMES 100
 
 void random_array(std::vector<int> &array) {
   for (int i = 0; i < array.size(); ++i) {
     array[i] = rand() % 100;
   }
+}
+
+cv::Mat load_image() {
+  cv::Mat image = cv::imread("./image.jpeg");
+  if (image.empty()) {
+    std::cout << "322";
+  }
+  return image;
+}
+
+std::vector<int> get_channel_from_mat(cv::Mat &image, int channel) {
+  std::vector<int> array{0};
+  for (int i = 0; i < image.cols; ++i) {
+    for (int j = 0; j < image.rows; ++j) {
+      cv::Vec3b intensity = image.at<cv::Vec3b>(j, i);
+      uchar col = intensity.val[channel];
+      array.push_back(col);
+    }
+  }
+  return array;
 }
 
 int basic_sum(std::vector<int> &array) {
@@ -29,7 +51,7 @@ void sum_slice(std::atomic<int> &result, std::vector<int> &array, int start_pos,
 
 void multithread_sum(std::vector<int> &array, std::atomic<int> &result) {
   int thread_amount = 16;
-  int block_size = N / thread_amount;
+  int block_size = array.size() / thread_amount;
 
   std::vector<std::thread> threads;
   for (int i = 0; i < thread_amount; ++i) {
@@ -44,10 +66,13 @@ void multithread_sum(std::vector<int> &array, std::atomic<int> &result) {
 
 void task1() {
   printf("Task1:\n");
-  std::vector<int> array(N, 0);
-  random_array(array);
+  cv::Mat image = load_image();
+  std::vector<int> array = get_channel_from_mat(image, 0);
   std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
-  int simple_result = basic_sum(array);
+  int simple_result = 0;
+  for (int t = 0; t < TIMES; ++t) {
+    simple_result = basic_sum(array);
+  }
   std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
   std::chrono::duration<double> clock_delta = end_t - start_t;
 
@@ -56,7 +81,10 @@ void task1() {
 
   std::atomic<int> m_result{0};
   start_t = std::chrono::system_clock::now();
-  multithread_sum(array, m_result);
+  for (int t = 0; t < TIMES; ++t) {
+    m_result.store(0);
+    multithread_sum(array, m_result);
+  }
   end_t = std::chrono::system_clock::now();
   clock_delta = end_t - start_t;
 
@@ -84,7 +112,7 @@ void min_slice(std::atomic<int> &result, std::vector<int> &array, int start_pos,
 
 void multithread_min(std::vector<int> &array, std::atomic<int> &result) {
   int thread_amount = 16;
-  int block_size = N / thread_amount;
+  int block_size = array.size() / thread_amount;
 
   std::vector<std::thread> threads;
   for (int i = 0; i < thread_amount; ++i) {
@@ -99,8 +127,8 @@ void multithread_min(std::vector<int> &array, std::atomic<int> &result) {
 
 void task2() {
   printf("Task2:\n");
-  std::vector<int> array(N, 0);
-  random_array(array);
+  cv::Mat image = load_image();
+  std::vector<int> array = get_channel_from_mat(image, 0);
   std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
   int simple_result = basic_min(array);
   std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
@@ -141,6 +169,7 @@ void basic_conv(std::vector<int> &array, std::vector<int> filter, std::vector<in
 }
 
 void conv_slice(std::vector<int> &array, std::vector<int> &filter, std::vector<int> &result_array, int start_pos, int end_pos) {
+  end_pos = fmin(array.size(), end_pos);
   for (int i = start_pos; i < end_pos; ++i) {
     int value = 0;
     int start_point =  i - (filter.size() / 2);
@@ -157,7 +186,7 @@ void conv_slice(std::vector<int> &array, std::vector<int> &filter, std::vector<i
 
 void multithread_conv(std::vector<int> &array, std::vector<int> &filter, std::vector<int> &result_array) {
   int thread_amount = 16;
-  int block_size = N / thread_amount;
+  int block_size = array.size() / thread_amount;
 
   std::vector<std::thread> threads;
   for (int i = 0; i < thread_amount; ++i) {
@@ -172,22 +201,27 @@ void multithread_conv(std::vector<int> &array, std::vector<int> &filter, std::ve
 
 void task3() {
   printf("Task3:\n");
-  std::vector<int> array(N, 0);
-  random_array(array);
+  cv::Mat image = load_image();
   std::vector<int> filter(32, 0);
   generate_filter(filter);
-  std::vector<int> result_array(N, 0);
 
   std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
-  basic_conv(array, filter, result_array);
+  for (int i = 0; i < 3; ++i) {
+    std::vector<int> array = get_channel_from_mat(image, i);
+    std::vector<int> result_array(array.size(), 0);
+    basic_conv(array, filter, result_array);
+  }
   std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
   std::chrono::duration<double> clock_delta = end_t - start_t;
 
   printf("Simple results:\t %.2f \t\n", clock_delta.count());
 
-  std::vector<int> m_result_array(N, 0);
   start_t = std::chrono::system_clock::now();
-  multithread_conv(array, filter, m_result_array);
+  for (int i = 0; i < 3; ++i) {
+    std::vector<int> array = get_channel_from_mat(image, i);
+    std::vector<int> m_result_array(array.size(), 0);
+    multithread_conv(array, filter, m_result_array);
+  }
   end_t = std::chrono::system_clock::now();
   clock_delta = end_t - start_t;
 
