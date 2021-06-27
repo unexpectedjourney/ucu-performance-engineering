@@ -130,7 +130,10 @@ void task2() {
   cv::Mat image = load_image();
   std::vector<int> array = get_channel_from_mat(image, 0);
   std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
-  int simple_result = basic_min(array);
+  int simple_result = 0;
+  for (int t = 0; t < TIMES; ++t) {
+    simple_result = basic_min(array);
+  }
   std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
   std::chrono::duration<double> clock_delta = end_t - start_t;
 
@@ -139,7 +142,10 @@ void task2() {
 
   std::atomic<int> m_result{0};
   start_t = std::chrono::system_clock::now();
-  multithread_min(array, m_result);
+  for (int t = 0; t < TIMES; ++t) {
+    m_result.store(1000000);
+    multithread_min(array, m_result);
+  }
   end_t = std::chrono::system_clock::now();
   clock_delta = end_t - start_t;
 
@@ -206,10 +212,12 @@ void task3() {
   generate_filter(filter);
 
   std::chrono::time_point<std::chrono::system_clock> start_t = std::chrono::system_clock::now();
-  for (int i = 0; i < 3; ++i) {
-    std::vector<int> array = get_channel_from_mat(image, i);
-    std::vector<int> result_array(array.size(), 0);
-    basic_conv(array, filter, result_array);
+  for (int t = 0; t < TIMES; ++t) {
+    for (int i = 0; i < 3; ++i) {
+      std::vector<int> array = get_channel_from_mat(image, i);
+      std::vector<int> result_array(array.size(), 0);
+      basic_conv(array, filter, result_array);
+    }
   }
   std::chrono::time_point<std::chrono::system_clock> end_t = std::chrono::system_clock::now();
   std::chrono::duration<double> clock_delta = end_t - start_t;
@@ -217,10 +225,12 @@ void task3() {
   printf("Simple results:\t %.2f \t\n", clock_delta.count());
 
   start_t = std::chrono::system_clock::now();
-  for (int i = 0; i < 3; ++i) {
-    std::vector<int> array = get_channel_from_mat(image, i);
-    std::vector<int> m_result_array(array.size(), 0);
-    multithread_conv(array, filter, m_result_array);
+  for (int t = 0; t < TIMES; ++t) {
+    for (int i = 0; i < 3; ++i) {
+      std::vector<int> array = get_channel_from_mat(image, i);
+      std::vector<int> m_result_array(array.size(), 0);
+      multithread_conv(array, filter, m_result_array);
+    }
   }
   end_t = std::chrono::system_clock::now();
   clock_delta = end_t - start_t;
