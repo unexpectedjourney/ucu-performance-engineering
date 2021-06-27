@@ -57,6 +57,9 @@ void multithread_sum(std::vector<int> &array, std::atomic<int> &result) {
   for (int i = 0; i < thread_amount; ++i) {
     int start_pos = i * block_size;
     int end_pos = (i + 1) * block_size;
+    if (i == (thread_amount - 1)) {
+      end_pos = array.size();
+    }
     threads.push_back(std::thread(sum_slice, std::ref(result), std::ref(array), start_pos, end_pos));
   }
   for (int i = 0; i < threads.size(); ++i) {
@@ -118,6 +121,9 @@ void multithread_min(std::vector<int> &array, std::atomic<int> &result) {
   for (int i = 0; i < thread_amount; ++i) {
     int start_pos = i * block_size;
     int end_pos = (i + 1) * block_size;
+    if (i == (thread_amount - 1)) {
+      end_pos = array.size();
+    }
     threads.push_back(std::thread(min_slice, std::ref(result), std::ref(array), start_pos, end_pos));
   }
   for (int i = 0; i < threads.size(); ++i) {
@@ -198,6 +204,9 @@ void multithread_conv(std::vector<int> &array, std::vector<int> &filter, std::ve
   for (int i = 0; i < thread_amount; ++i) {
     int start_pos = i * block_size;
     int end_pos = (i + 1) * block_size;
+    if (i == (thread_amount - 1)) {
+      end_pos = array.size();
+    }
     threads.push_back(std::thread(conv_slice, std::ref(array), std::ref(filter), std::ref(result_array), start_pos, end_pos));
   }
   for (int i = 0; i < threads.size(); ++i) {
